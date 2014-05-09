@@ -7,7 +7,7 @@
     <string name="media_route_menu_title">Connect to Device</string>
     <string name="namespace">urn:x-cast:com.google.cast.sample.helloworld</string>
     <string name="app_id">DA37F7AA</string>
-    <string name="instructions">Capstone 8조&lt;br&gt;1차 보고서</string>
+    <string name="instructions">Capstone 8조&lt;br&gt;중간보고</string>
     <string name="message_to_cast">Message to Cast&#8230;</string>
     <string name="descr_image">Image</string>
     <string name="menu_item_clear_memory_cache">Clear memory cache</string>

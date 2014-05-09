@@ -1,7 +1,12 @@
 package com.example.chromecastv2;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import com.google.android.gms.cast.ApplicationMetadata;
@@ -21,6 +26,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -69,6 +75,9 @@ public class MyActivity extends ActionBarActivity {
 	boolean mWaitingForReconnect;
 	String mSessionId;
 	Button showBtn;
+    private int serverResponseCode = 0;
+    private ProgressDialog dialog = null;
+    private String upLoadServerUri = null;
 	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -80,6 +89,7 @@ public class MyActivity extends ActionBarActivity {
 				.getString(R.string.app_id))).build();
 		mMediaRouterCallback = new MyMediaRouterCallback();
 		showBtn = (Button)findViewById(R.id.showbutton);
+		upLoadServerUri = "http://203.246.112.116/UploadToServer.php";
 		 
 		final String[] columns = { MediaStore.Images.Media.DATA, MediaStore.Images.Media._ID };
 		final String orderBy = MediaStore.Images.Media.DATE_TAKEN;
@@ -106,11 +116,154 @@ public class MyActivity extends ActionBarActivity {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				Toast.makeText(MyActivity.this, "Show Button Click", Toast.LENGTH_LONG).show();
+//				Toast.makeText(MyActivity.this, "Show Button Click", Toast.LENGTH_LONG).show();
+				 new Thread(new Runnable() {
+	                 public void run() {
+	                	 ArrayList<String> sendImgList = imageAdapter.getCheckedItems();
+	                	 for(int i=0;i<sendImgList.size();i++)
+	                		 uploadFile(sendImgList.get(i));
+	                	        //uploadFile(imageUrls.get(250));                
+	                 }
+	               }).start();   
 			}
 		});
 	}
 
+	 public int uploadFile(String sourceFileUri) {
+         
+   	  
+   	  String fileName = sourceFileUri;
+
+         HttpURLConnection conn = null;
+         DataOutputStream dos = null;  
+         String lineEnd = "\r\n";
+         String twoHyphens = "--";
+         String boundary = "*****";
+         int bytesRead, bytesAvailable, bufferSize;
+         byte[] buffer;
+         int maxBufferSize = 10 * 1024 * 1024; 
+         File sourceFile = new File(sourceFileUri); 
+         
+         if (!sourceFile.isFile()) {
+       	  
+//	           dialog.dismiss(); 
+	           
+	           Log.e("uploadFile", "Source File not exist :"+"file://"+imageUrls.get(0));
+	           
+	           runOnUiThread(new Runnable() {
+	               public void run() {
+	            	   Toast.makeText(MyActivity.this, "Source File not exist ", Toast.LENGTH_LONG).show();
+	               }
+	           }); 
+	           
+	           return 0;
+          
+         }
+         else
+         {
+	           try { 
+	        	   
+	            	 // open a URL connection to the Servlet
+	               FileInputStream fileInputStream = new FileInputStream(sourceFile);
+	               URL url = new URL(upLoadServerUri);
+	               
+	               // Open a HTTP  connection to  the URL
+	               conn = (HttpURLConnection) url.openConnection(); 
+	               conn.setDoInput(true); // Allow Inputs
+	               conn.setDoOutput(true); // Allow Outputs
+	               conn.setUseCaches(false); // Don't use a Cached Copy
+	               conn.setRequestMethod("POST");
+	               conn.setRequestProperty("Connection", "Keep-Alive");
+	               conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+	               conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+	               conn.setRequestProperty("uploaded_file", fileName); 
+	               
+	               dos = new DataOutputStream(conn.getOutputStream());
+	     
+	               dos.writeBytes(twoHyphens + boundary + lineEnd); 
+	               dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\""
+	            		                     + fileName + "\"" + lineEnd);
+	               
+	               dos.writeBytes(lineEnd);
+	     
+	               // create a buffer of  maximum size
+	               bytesAvailable = fileInputStream.available(); 
+	     
+	               bufferSize = Math.min(bytesAvailable, maxBufferSize);
+	               buffer = new byte[bufferSize];
+	     
+	               // read file and write it into form...
+	               bytesRead = fileInputStream.read(buffer, 0, bufferSize);  
+	                 
+	               while (bytesRead > 0) {
+	            	   
+	                 dos.write(buffer, 0, bufferSize);
+	                 bytesAvailable = fileInputStream.available();
+	                 bufferSize = Math.min(bytesAvailable, maxBufferSize);
+	                 bytesRead = fileInputStream.read(buffer, 0, bufferSize);   
+	                 
+	                }
+	     
+	               // send multipart form data necesssary after file data...
+	               dos.writeBytes(lineEnd);
+	               dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+	     
+	               // Responses from the server (code and message)
+	               serverResponseCode = conn.getResponseCode();
+	               String serverResponseMessage = conn.getResponseMessage();
+	                
+	               Log.i("uploadFile", "HTTP Response is : " 
+	            		   + serverResponseMessage + ": " + serverResponseCode);
+	               
+	               if(serverResponseCode == 200){
+	            	   
+	                   runOnUiThread(new Runnable() {
+	                        public void run() {
+	                        	String msg = "File Upload Completed.\n\n See uploaded file here : \n\n"
+                     		          +" F:/wamp/wamp/www/uploads";
+//	                        	messageText.setText(msg);
+	                            Toast.makeText(MyActivity.this, "File Upload Complete.", Toast.LENGTH_SHORT).show();
+	                        }
+	                    });                
+	               }    
+	               
+	               //close the streams //
+	               fileInputStream.close();
+	               dos.flush();
+	               dos.close();
+	                
+	          } catch (MalformedURLException ex) {
+	        	  
+//	              dialog.dismiss();  
+	              ex.printStackTrace();
+	              
+	              runOnUiThread(new Runnable() {
+	                  public void run() {
+//	                	  messageText.setText("MalformedURLException Exception : check script url.");
+	                      Toast.makeText(MyActivity.this, "MalformedURLException", Toast.LENGTH_SHORT).show();
+	                  }
+	              });
+	              
+	              Log.e("Upload file to server", "error: " + ex.getMessage(), ex);  
+	          } catch (Exception e) {
+	        	  
+//	              dialog.dismiss();  
+	              e.printStackTrace();
+	              
+	              runOnUiThread(new Runnable() {
+	                  public void run() {
+//	                	  messageText.setText("Got Exception : see logcat ");
+	                      Toast.makeText(MyActivity.this, "Got Exception : see logcat ", Toast.LENGTH_SHORT).show();
+	                  }
+	              });
+	              Log.e("Upload file to server Exception", "Exception : "  + e.getMessage(), e);  
+	          }
+//	          dialog.dismiss();       
+	          return serverResponseCode; 
+	          
+          } // End else block 
+        }
+	
 	public class ImageAdapter extends BaseAdapter {
 		DisplayImageOptions options;
 		ArrayList<String> mList;
@@ -212,6 +365,7 @@ public class MyActivity extends ActionBarActivity {
 			mCheckBox.setTag(position);
 			mCheckBox.setChecked(mSparseBooleanArray.get(position));
 			mCheckBox.setOnCheckedChangeListener(mCheckedChangeListener);
+			
 			
 			return view;
 		}
