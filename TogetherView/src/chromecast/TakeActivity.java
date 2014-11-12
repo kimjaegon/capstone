@@ -27,7 +27,7 @@ public class TakeActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_interface);
+		setContentView(R.layout.activity_takeview);
 		
 		prevBtn = (ImageButton)findViewById(R.id.prevbtn);
 		nextBtn = (ImageButton)findViewById(R.id.nextbtn);
@@ -49,15 +49,7 @@ public class TakeActivity extends ActionBarActivity {
 			finish();
 		return super.onKeyDown(keyCode, event);
 	}
-	
-	@Override
-	protected void onResume() {
-		sendMessage("s");
-		SystemClock.sleep(3000);
-		sendMessage("i");
-		super.onResume();
-	}
-	
+
 	private final View.OnClickListener btnClickListener = new OnClickListener() {
 
 		@Override
@@ -74,7 +66,6 @@ public class TakeActivity extends ActionBarActivity {
 			case R.id.mainscreenbtn:
 				Intent mainScreenIntent = new Intent(getApplicationContext(), MainScreenActivity.class);
 				startActivity(mainScreenIntent);
-//				Toast.makeText(getApplicationContext(), "죄송합니다.해당 이벤트를 준비중입니다.", Toast.LENGTH_LONG).show();
 				break;
 				
 			case R.id.secondscreenbtn:

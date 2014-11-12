@@ -20,7 +20,7 @@ import android.widget.Toast;
 
 public class ShowActivity extends ActionBarActivity {
 
-	ImageButton prevBtn, nextBtn, mainScreenBtn, secondScreenBtn;
+	ImageButton prevBtn, nextBtn, frontBtn, endBtn;
 	Object object;
 	boolean identifyIntent = false;
 	public static final String NAMESPACE = "urn:x-cast:com.ls.cast.sample";
@@ -29,27 +29,27 @@ public class ShowActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_interface);
+		setContentView(R.layout.activity_showview);
 
 		prevBtn = (ImageButton)findViewById(R.id.prevbtn);
 		nextBtn = (ImageButton)findViewById(R.id.nextbtn);
-		mainScreenBtn = (ImageButton)findViewById(R.id.mainscreenbtn);
-		secondScreenBtn = (ImageButton)findViewById(R.id.secondscreenbtn);
+		frontBtn = (ImageButton)findViewById(R.id.frontbtn);
+		endBtn = (ImageButton)findViewById(R.id.endbtn);
 
 		object = (Object)ApiClientData.getObjectForKey("key");
 
 		prevBtn.setOnClickListener(btnClickListener);
 		nextBtn.setOnClickListener(btnClickListener);
-		mainScreenBtn.setOnClickListener(btnClickListener);
-		secondScreenBtn.setOnClickListener(btnClickListener);
+		frontBtn.setOnClickListener(btnClickListener);
+		endBtn.setOnClickListener(btnClickListener);
 		
 	}
-
+	
 	@Override
 	protected void onResume() {
 		sendMessage("s");
 		SystemClock.sleep(3000);
-		sendMessage("i");
+		sendMessage("f");
 		super.onResume();
 	}
 
@@ -75,13 +75,12 @@ public class ShowActivity extends ActionBarActivity {
 				sendMessage("+");
 				break;
 			
-			case R.id.mainscreenbtn:
-				Intent mainScreenIntent = new Intent(getApplicationContext(), MainScreenActivity.class);
-				startActivity(mainScreenIntent);
+			case R.id.frontbtn:
+				sendMessage("f");
 				break;
 				
-			case R.id.secondscreenbtn:
-				finish();
+			case R.id.endbtn:
+				sendMessage("e");
 				break;
 			}
 
